@@ -1,6 +1,6 @@
 // 공개 사이트 파일 점검 (빌드는 비공개 저장소 codberg-dev/bon-docs 에서 한다 — 여기는 완성 파일만).
 // 네트워크 없이: 페이지 4개·PDF 4개·OG 이미지 4개가 있는지, 페이지 안의 상대 주소(href/src)가 실제 파일을 가리키는지,
-// OG·canonical 이 공개 주소(CNAME)를 쓰는지, sitemap·robots 가 맞는지. 실행: node .github/scripts/check-site.mjs
+// OG·canonical 이 공개 주소(CNAME)를 쓰는지, sitemap·robots 가 맞는지, 방문 통계 스크립트(assets/analytics.js)가 연결돼 있고 쿠키를 쓰지 않는지. 실행: node .github/scripts/check-site.mjs
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -39,7 +39,13 @@ for (const [lang, dir] of Object.entries(LANGS)) {
     if (!has(p)) missing.push(ref);
   }
   ok(missing.length === 0, `${page} 상대 주소 모두 있음${missing.length ? ` — 없음: ${missing.join(", ")}` : ""}`);
+  ok(html.includes(`<script defer src="${dir ? "../" : ""}assets/analytics.js"></script>`), `${page} 방문 통계 스크립트 연결`);
 }
+
+// 방문 통계: 쿠키·저장소를 쓰지 않고, 설정이 비어 있으면 아무것도 하지 않는 구조인지
+const analytics = has("assets/analytics.js") ? read("assets/analytics.js") : "";
+ok(analytics !== "" && !/document\.cookie|localStorage|sessionStorage|indexedDB/.test(analytics), "assets/analytics.js 쿠키·저장소 미사용");
+ok(analytics.includes("if (!script && !endpoint) return;"), "assets/analytics.js 설정이 비면 꺼짐");
 
 const sitemap = read("sitemap.xml");
 const locs = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
