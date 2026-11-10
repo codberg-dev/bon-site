@@ -1,0 +1,24 @@
+name: 사이트 파일 점검
+
+# 이 저장소는 완성 파일만 둔다 (빌드는 codberg-dev/bon-docs CI). 여기서는 깨진 링크·빠진 파일·공개 주소만 본다.
+# 배포 단계 없음 — GitHub Pages 는 저장소 설정 그대로.
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: 페이지·PDF·링크·OG·sitemap 점검
+        run: node .github/scripts/check-site.mjs
